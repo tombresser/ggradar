@@ -82,3 +82,29 @@ mtcars %>%
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+## Add ribbon
+
+You can add a ribbon to the radar chart by setting `ribbon = TRUE` and providing `ribbonn,min` and `ribbon.max`. This can be usefull if you want to visualize confidence intervals.
+
+``` r
+
+mtcars_radar <- mtcars %>% 
+  as_tibble(rownames = "group") %>% 
+  mutate_at(vars(-group), rescale) %>% 
+  tail(2) %>% 
+  select(1:10)
+
+mtcars_radar_min <- mtcars_radar %>% 
+  mutate(across(!group, ~ . * 0.85))
+
+mtcars_radar_max <- mtcars_radar %>%
+  mutate(across(!group, ~ . * 1.15))
+
+ggradar(mtcars_radar,
+        ribbon = TRUE,
+        ribbon.min = mtcars_radar_min,
+        ribbon.max = mtcars_radar_max)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
