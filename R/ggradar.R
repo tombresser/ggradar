@@ -98,13 +98,16 @@ ggradar <- function(plot.data,
                     fill.alpha = 0.5,
                     draw.points = TRUE, # Whether to draw points
                     point.alpha = 1, # Alpha for points, can be a single value or vector
-                    line.alpha = 1 # Alpha for lines, can be a single value or vector
+                    line.alpha = 1, # Alpha for lines, can be a single value or vector
+                    ribbon = FALSE,
+                    ribbon.alpha = 0.3,
+                    ribbon.min = NULL,
+                    ribbon.max = NULL
 ) {
 
   # Set min and max values for grid
   grid.max <- grid.values[length(grid.values)]
   grid.min <- grid.values[1]
-
 
   plot.data <- as.data.frame(plot.data)
   # if there are several groups in the first column with differing values
@@ -119,6 +122,20 @@ ggradar <- function(plot.data,
     plot.data[, 1] <- as.factor(as.character(plot.data[, 1]))
   }
   
+  # Check that ribbon.min and ribbon.max are supplied if ribbon is TRUE
+  if (ribbon) {
+    if (is.null(ribbon.min) | is.null(ribbon.max)) {
+      stop("If ribbon is TRUE, both ribbon.min and ribbon.max must be supplied")
+    }
+  }
+
+  # Check that ribbon.min and ribbon.max have the same dimensions
+  if (ribbon) {
+    if (all(dim(ribbon.min) != dim(ribbon.max))) {
+      stop("If ribbon is TRUE, ribbon.min and ribbon.max must have the same dimensions")
+    }
+  }
+
   var.names <- colnames(plot.data)[-1] # Short version of variable names
   # axis.labels [if supplied] is designed to hold 'long version' of variable names
   # with line-breaks indicated using \n
@@ -152,7 +169,60 @@ ggradar <- function(plot.data,
   group <- NULL
   group$path <- CalculateGroupPath(plot.data.offset)
 
-  # print(group$path)
+
+  ### Convert ribbon data into plottable format
+  # calculate coordinates of min and max values
+  if(ribbon) {
+      ## min value
+    plot.ribbon.min <- as.data.frame(ribbon.min)
+      # if there are several groups in the first column with differing values
+      # on the dimensions, we should aggregate them by taking the mean, otherwise
+      # only the first row is taken into account in the function CalculateGroupPath.
+      plot.ribbon.min <- aggregate(
+        x = plot.ribbon.min[, -1], 
+        by = list(plot.ribbon.min[, 1]), 
+        FUN = "mean")
+        
+      if (!is.factor(plot.ribbon.min[, 1])) {
+        plot.ribbon.min[, 1] <- as.factor(as.character(plot.ribbon.min[, 1]))
+      }
+
+      plot.ribbon.min.offset <- plot.ribbon.min
+      plot.ribbon.min.offset[, 2:ncol( plot.ribbon.min)] <-  plot.ribbon.min[, 2:ncol( plot.ribbon.min)] + abs(centre.y)
+
+      # (b) convert into radial coords
+      ribbon_min <- CalculateGroupPath(plot.ribbon.min.offset)
+
+      ## max value
+      plot.ribbon.max <- as.data.frame(ribbon.max)
+      # if there are several groups in the first column with differing values
+      # on the dimensions, we should aggregate them by taking the mean, otherwise
+      # only the first row is taken into account in the function CalculateGroupPath.
+      plot.ribbon.max <- aggregate(
+        x = plot.ribbon.max[, -1], 
+        by = list(plot.ribbon.max[, 1]), 
+        FUN = "mean")
+        
+      if (!is.factor(plot.ribbon.max[, 1])) {
+        plot.ribbon.max[, 1] <- as.factor(as.character(plot.ribbon.max[, 1]))
+      }
+
+      plot.ribbon.max.offset <- plot.ribbon.max
+      plot.ribbon.max.offset[, 2:ncol(plot.ribbon.max)] <- plot.ribbon.max[, 2:ncol(plot.ribbon.max)] + abs(centre.y)
+
+      # (b) convert into radial coords
+      ribbon_max <- CalculateGroupPath(plot.ribbon.max.offset)
+
+      ## add subid to enable holes in geom_polygon
+      # (geom_ribbon is not used as it does not support )
+      ribbon_min$subid <- 2L
+      ribbon_max$subid <- 1L
+
+      # add ribbon values to group
+      group$path_ribbon <- rbind(ribbon_min, ribbon_max)
+  }
+  
+
   # (c) Calculate coordinates required to plot radial variable axes
   axis <- NULL
   axis$path <- CalculateAxisPath(var.names, grid.min + abs(centre.y), grid.max + abs(centre.y))
@@ -178,7 +248,8 @@ ggradar <- function(plot.data,
   # (e) Create Circular grid-lines + labels
   # caclulate the cooridinates required to plot circular grid-lines for three user-specified
   # y-axis values: min, mid and max [grid.min; grid.mid; grid.max]
-    gridline <- lapply(1:length(grid.values), list)
+  gridline <- lapply(1:length(grid.values), list)
+
   for (i in 1:length(grid.values)){
     gridline[[i]]$path <- funcCircleCoords(c(0, 0), grid.values[i] + abs(centre.y), npoints = 360)
     gridline[[i]]$label <- data.frame(
@@ -230,7 +301,7 @@ ggradar <- function(plot.data,
     for (i in 1:length(grid.values)){
     base <- base + geom_path(
       data = gridline[[i]]$path, aes(x = x, y = y),
-      lty = gridline.linetype[i], colour = gridline.colour[i], size = grid.line.width
+      lty = gridline.linetype[i], colour = gridline.colour[i], linewidth = grid.line.width
     )
   }
 
@@ -261,11 +332,20 @@ ggradar <- function(plot.data,
 
   theGroupName <- names(group$path[1])
 
+
+  # ... + group (cluster) ribbon
+  # using polygon to create a ribbon by extracting the min polygon 
+  # from the max polygon using the subgroup aesthetic to differentiate 
+  # holes
+  if (ribbon == TRUE) {
+  base <- base + geom_polygon(data = group$path_ribbon,
+                      aes(x = .data[["x"]], y = .data[["y"]], group = .data[[theGroupName]],
+                      subgroup = subid, fill = .data[[theGroupName]]),
+                      alpha = ribbon.alpha,
+                      show.legend = FALSE)
+  }
+
   # ... + group (cluster) 'paths'
-  # base <- base + geom_path(
-  #   data = group$path, aes(x = .data[["x"]], y = .data[["y"]], group = theGroupName, colour = theGroupName),
-  #   size = group.line.width
-  # )
   if (length(line.alpha) == 1) {
     base <- base + geom_path(data = group$path, aes(x = .data[["x"]], y = .data[["y"]], group = .data[[theGroupName]], colour = .data[[theGroupName]]), linewidth = group.line.width, alpha = line.alpha)
   } else {
