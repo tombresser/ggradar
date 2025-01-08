@@ -42,6 +42,13 @@ knitr::kable(mtcars_radar,format = "markdown")
 ggradar(mtcars_radar)
 ```
 
+## Custom grid lines
+You can use custom gridlines by changing grid.values. The default is `c(0, 0.5, 1)`.
+
+```{r}
+ggradar(mtcars_radar, grid.values = c(0, 0.25, 0.75, 1))
+```
+
 ## Custom fonts
 
 You can also use custom font family in `ggradar`. In the following example, you would like to use Airbnb's font family named 'Circular Air' by first downloading it, installing it in your computer (not shown), and then registering it to R using `extrafont` package.
