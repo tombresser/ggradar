@@ -46,6 +46,13 @@ ggradar(mtcars_radar)
 
 ![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
+## Custom grid lines
+You can use custom gridlines by changing grid.values. The default is `c(0, 0.5, 1)`.
+
+``` r
+ggradar(mtcars_radar, grid.values = c(0, 0.25, 0.75, 1))
+```
+
 ## Custom fonts
 
 You can also use custom font family in `ggradar`. In the following
