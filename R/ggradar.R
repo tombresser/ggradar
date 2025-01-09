@@ -351,7 +351,14 @@ ggradar <- function(plot.data,
   } else {
     # Assuming line.alpha is a vector with the same length as the number of groups
     # This will apply different alpha values to each line
-    base <- base + geom_path(data = group$path, aes(x = .data[["x"]], y = .data[["y"]], group = .data[[theGroupName]], colour = .data[[theGroupName]]), linewidth = group.line.width) +
+    base <- base + geom_path(data = group$path,
+                             aes(x = .data[["x"]],
+                              y = .data[["y"]],
+                              group = .data[[theGroupName]],
+                              colour = .data[[theGroupName]],
+                              alpha = .data[[theGroupName]]),
+                              linewidth = group.line.width,
+                              show.legend = FALSE) +
       scale_alpha_manual(values = line.alpha)
   }
 
