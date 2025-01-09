@@ -375,7 +375,7 @@ ggradar <- function(plot.data,
                                 aes(x = .data[["x"]],
                                 y = .data[["y"]],
                                 group = .data[[theGroupName]],
-                                colour = .data[[theGroupName]]),
+                                colour = .data[[theGroupName]],
                                 alpha = .data[[theGroupName]]),
                                 size = group.point.size) +
         scale_alpha_manual(values = point.alpha)
