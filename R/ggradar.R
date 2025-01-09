@@ -353,10 +353,10 @@ ggradar <- function(plot.data,
     # This will apply different alpha values to each line
     base <- base + geom_path(data = group$path,
                              aes(x = .data[["x"]],
-                              y = .data[["y"]],
-                              group = .data[[theGroupName]],
-                              colour = .data[[theGroupName]],
-                              alpha = .data[[theGroupName]]),
+                                y = .data[["y"]],
+                                group = .data[[theGroupName]],
+                                colour = .data[[theGroupName]],
+                                alpha = .data[[theGroupName]]),
                               linewidth = group.line.width,
                               show.legend = FALSE) +
       scale_alpha_manual(values = line.alpha)
@@ -367,45 +367,66 @@ ggradar <- function(plot.data,
   if (draw.points) {
     # Check if point.alpha is a vector or single value
     if (length(point.alpha) == 1) {
-      base <- base + geom_point(data = group$path, aes(x = .data[["x"]], y = .data[["y"]], group = .data[[theGroupName]], colour = .data[[theGroupName]]), size = group.point.size, alpha = point.alpha)
+      base <- base + geom_point(data = group$path,
+                                aes(x = .data[["x"]],
+                                  y = .data[["y"]],
+                                  group = .data[[theGroupName]],
+                                  colour = .data[[theGroupName]]),
+                                  size = group.point.size,
+                                  alpha = point.alpha)
     } else {
       # Assuming point.alpha is a vector with the same length as the number of groups
       # This will apply different alpha values to each group
       base <- base + geom_point(data = group$path,
                                 aes(x = .data[["x"]],
-                                y = .data[["y"]],
-                                group = .data[[theGroupName]],
-                                colour = .data[[theGroupName]],
-                                alpha = .data[[theGroupName]]),
-                                size = group.point.size) +
+                                  y = .data[["y"]],
+                                  group = .data[[theGroupName]],
+                                  colour = .data[[theGroupName]],
+                                  alpha = .data[[theGroupName]]),
+                                size = group.point.size,
+                                show.legend = FALSE) +
         scale_alpha_manual(values = point.alpha)
     }
   }
 
   # ... + group (cluster) fills
   if (fill == TRUE) {
-    base <- base + geom_polygon(data = group$path, aes(x = .data[["x"]], y = .data[["y"]], group = .data[[theGroupName]], fill = .data[[theGroupName]]), alpha = fill.alpha)
+    base <- base + geom_polygon(data = group$path,
+                                aes(x = .data[["x"]],
+                                  y = .data[["y"]],
+                                  group = .data[[theGroupName]],
+                                  fill = .data[[theGroupName]]),
+                                alpha = fill.alpha)
   }
 
 
   # ... + amend Legend title
-  if (plot.legend == TRUE) base <- base + labs(colour = legend.title, size = legend.text.size)
+  if (plot.legend == TRUE) {
+    base <- base + labs(colour = legend.title,
+                        size = legend.text.size)
+  }
 
   # ... + grid-line labels (max; mid; min)
   if(sum(label.gridline)>=0) {
-    gridLabelData <- bind_rows(lapply(gridline,FUN=function(x) x$label)) %>% 
+    gridLabelData <- bind_rows(lapply(gridline,FUN=function(x) x$label)) %>%
       filter(row_number() %in% which(label.gridline))
     
     base <- base + geom_text(aes(x = x, y = y, label = labels), 
                              data = gridLabelData, 
                              inherit.aes=FALSE,
-                             size = grid.label.size * 0.8, hjust = 1, family = font.radar)
+                             size = grid.label.size * 0.8,
+                             hjust = 1,
+                             family = font.radar)
   }
 
   # ... + centre.y label if required [i.e. value of y at centre of plot circle]
   if (label.centre.y == TRUE) {
     centre.y.label <- data.frame(x = 0, y = 0, text = as.character(centre.y))
-    base <- base + geom_text(aes(x = x, y = y, label = text), data = centre.y.label, size = grid.label.size, hjust = 0.5, family = font.radar)
+    base <- base + geom_text(aes(x = x, y = y, label = text),
+                             data = centre.y.label,
+                             size = grid.label.size,
+                             hjust = 0.5,
+                             family = font.radar)
   }
 
   if (!is.null(group.colours)) {
