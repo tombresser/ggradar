@@ -371,7 +371,13 @@ ggradar <- function(plot.data,
     } else {
       # Assuming point.alpha is a vector with the same length as the number of groups
       # This will apply different alpha values to each group
-      base <- base + geom_point(data = group$path, aes(x = .data[["x"]], y = .data[["y"]], group = .data[[theGroupName]], colour = .data[[theGroupName]]), size = group.point.size) +
+      base <- base + geom_point(data = group$path,
+                                aes(x = .data[["x"]],
+                                y = .data[["y"]],
+                                group = .data[[theGroupName]],
+                                colour = .data[[theGroupName]]),
+                                alpha = .data[[theGroupName]]),
+                                size = group.point.size) +
         scale_alpha_manual(values = point.alpha)
     }
   }
